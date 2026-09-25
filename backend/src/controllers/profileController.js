@@ -1,0 +1,20 @@
+import { addSaved, addSearch, addViewed, getOrCreateUser, getProfile, removeSaved, updatePreferences, updateUserProfile } from '../services/profileService.js';
+
+class ValidationError extends Error { statusCode = 400; }
+function bodyObject(body) { if (!body || typeof body !== 'object' || Array.isArray(body)) throw new ValidationError('Request body must be an object.'); return body; }
+function stringValue(value, fieldName, required = false) { if (value === undefined || value === null || value === '') { if (required) throw new ValidationError(`${fieldName} is required.`); return ''; } if (typeof value !== 'string') throw new ValidationError(`${fieldName} must be a string.`); return value.trim(); }
+function stringArray(value, fieldName, required = false) { if (value === undefined || value === null) { if (required) throw new ValidationError(`${fieldName} must be an array.`); return []; } if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) throw new ValidationError(`${fieldName} must be an array of strings.`); return value.map((item) => item.trim()).filter(Boolean); }
+function recipeBody(body) { const input = bodyObject(body); return { recipeId: stringValue(input.recipeId, 'recipeId', true), recipeName: stringValue(input.recipeName, 'recipeName', true), recipeData: input.recipeData && typeof input.recipeData === 'object' && !Array.isArray(input.recipeData) ? input.recipeData : {} }; }
+function user(request) { return getOrCreateUser(request.user); }
+
+export function readProfile(request, response) { return response.json({ success: true, data: getProfile(user(request)) }); }
+export function writeProfile(request, response) { const input = bodyObject(request.body); const displayName = stringValue(input.displayName, 'displayName', true); const updated = updateUserProfile(user(request), displayName); return response.json({ success: true, data: { name: updated.display_name, email: updated.email } }); }
+export function readPreferences(request, response) { return response.json({ success: true, data: getProfile(user(request)).preferences }); }
+export function writePreferences(request, response) { const input = bodyObject(request.body); const preferences = updatePreferences(user(request), { diet: stringValue(input.diet), cookingTime: stringValue(input.cookingTime), budget: stringValue(input.budget), spiceLevel: stringValue(input.spiceLevel), restrictions: stringArray(input.restrictions, 'restrictions'), equipment: stringArray(input.equipment, 'equipment') }); return response.json({ success: true, data: preferences }); }
+export function readSearches(request, response) { return response.json({ success: true, data: getProfile(user(request)).searches }); }
+export function writeSearch(request, response) { const input = bodyObject(request.body); const ingredients = stringArray(input.ingredients, 'ingredients', true); addSearch(user(request), { ingredients, mealType: stringValue(input.mealType), time: stringValue(input.time), budget: stringValue(input.budget), diet: stringValue(input.diet), restrictions: stringArray(input.restrictions, 'restrictions'), equipment: stringArray(input.equipment, 'equipment') }); return response.status(201).json({ success: true }); }
+export function readViewed(request, response) { return response.json({ success: true, data: getProfile(user(request)).viewed }); }
+export function writeViewed(request, response) { const recipe = recipeBody(request.body); addViewed(user(request), recipe); return response.status(201).json({ success: true }); }
+export function readSaved(request, response) { return response.json({ success: true, data: getProfile(user(request)).saved }); }
+export function writeSaved(request, response) { const recipe = recipeBody(request.body); addSaved(user(request), recipe); return response.status(201).json({ success: true }); }
+export function deleteSaved(request, response) { const recipeId = stringValue(request.params.recipeId, 'recipeId', true); removeSaved(user(request), recipeId); return response.json({ success: true }); }

@@ -7,6 +7,9 @@ export const env = {
   foundryAgentName: process.env.FOUNDRY_AGENT_NAME || '',
   foundryAgentVersion: process.env.FOUNDRY_AGENT_VERSION || '',
   foundryRequestTimeoutMs: Number.parseInt(process.env.FOUNDRY_REQUEST_TIMEOUT_MS || '60000', 10),
+  firebaseProjectId: process.env.FIREBASE_PROJECT_ID || '',
+  firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
+  firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY || '',
 };
 
 export function assertFoundryConfiguration() {

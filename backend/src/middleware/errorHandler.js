@@ -7,5 +7,7 @@ export function errorHandler(error, _request, response, _next) {
     return response.status(400).json({ success: false, error: 'Request body must be valid JSON.' });
   }
   console.error('[API] Unexpected error:', error.message);
-  return response.status(error.statusCode || 500).json({ success: false, error: 'Unable to generate meal recommendations.' });
+  const statusCode = error.statusCode || 500;
+  const message = statusCode === 400 ? error.message : statusCode === 404 ? 'Resource not found.' : statusCode === 409 ? 'The request conflicts with existing data.' : 'Unable to process the request.';
+  return response.status(statusCode).json({ success: false, error: message });
 }

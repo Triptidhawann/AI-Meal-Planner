@@ -1,7 +1,10 @@
+import { auth } from '../config/firebase';
+
 export async function planMeal(preferences) {
+  const token = auth?.currentUser ? await auth.currentUser.getIdToken() : '';
   const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/meal-planner/plan`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify({
       ingredients: preferences.ingredients,
       mealType: preferences.mealType,

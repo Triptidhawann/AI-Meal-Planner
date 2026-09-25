@@ -1,4 +1,5 @@
 import { planMealWithAgent } from '../services/foundryAgentService.js';
+import { addSearch, getOrCreateUser } from '../services/profileService.js';
 
 const supportedMealTypes = new Set(['breakfast', 'lunch', 'dinner', 'snack', 'any']);
 const supportedTimes = new Set(['10 min', '20 min', '30 min', '45 min', '1 hour+', '10', '20', '30', '45']);
@@ -46,6 +47,7 @@ export async function planMeal(request, response, next) {
   console.log('[MealPlanner] Request received');
   try {
     const preferences = validatePreferences(request.body);
+    addSearch(getOrCreateUser(request.user), preferences);
     const meals = await planMealWithAgent(preferences);
     if (!meals.length) return response.status(502).json({ success: false, error: 'No suitable meals were found. Try changing your ingredients or preferences.' });
     console.log('[MealPlanner] Returning recommendations');
