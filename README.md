@@ -94,10 +94,10 @@ sequenceDiagram
 ```mermaid
 flowchart LR
     Results[Results] --> Card[MealCard]
-    Card -->|View recipe| Viewed[POST /api/profile/viewed]
-    Viewed --> Details[/recipe/:recipeId]
-    Details --> Saved[POST /api/profile/saved]
-    Saved --> Profile[Profile and Saved Meals]
+    Card -->|View recipe| Viewed["POST /api/profile/viewed"]
+    Viewed --> Details["/recipe/:recipeId"]
+    Details --> Saved["POST /api/profile/saved"]
+    Saved --> Profile["Profile and Saved Meals"]
 ```
 
 ## Project Structure
