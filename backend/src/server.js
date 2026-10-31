@@ -7,7 +7,37 @@ import './config/database.js';
 import profileRoutes from './routes/profileRoutes.js';
 
 const app = express();
-app.use(cors({ origin: env.frontendUrl }));
+
+const configuredOrigin = (env.frontendUrl || '').replace(/\/+$/, '');
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g., server-to-server, health check, curl)
+    if (!origin) return callback(null, true);
+
+    try {
+      const parsed = new URL(origin);
+      const normalized = `${parsed.protocol}//${parsed.host}`;
+      if (
+        normalized === configuredOrigin ||
+        normalized === 'https://ai-meal-planner-wine.vercel.app' ||
+        parsed.hostname.endsWith('.vercel.app') ||
+        normalized === 'http://localhost:5173' ||
+        normalized === 'http://localhost:3000'
+      ) {
+        return callback(null, true);
+      }
+    } catch {
+      if (origin === configuredOrigin || origin.includes('vercel.app')) {
+        return callback(null, true);
+      }
+    }
+
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  credentials: true,
+}));
+
 app.use(express.json({ limit: '32kb' }));
 
 app.get('/', (_request, response) => response.json({

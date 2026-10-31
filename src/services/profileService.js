@@ -1,8 +1,9 @@
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
 async function request(user, path, options = {}) {
   const token = await user.getIdToken();
-  const response = await fetch(`${apiBase}/api/profile${path}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(options.headers || {}) } });
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const response = await fetch(`${apiBase}/api/profile${normalizedPath}`, { ...options, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(options.headers || {}) } });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || !payload.success) throw new Error(payload.error || 'Unable to load profile data.');
   return payload.data;
