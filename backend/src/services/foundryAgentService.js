@@ -1,12 +1,27 @@
 import { AIProjectClient } from '@azure/ai-projects';
-import { DefaultAzureCredential } from '@azure/identity';
+import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import { assertFoundryConfiguration, env } from '../config/env.js';
+
+function getCredential() {
+  const tenantId = (process.env.AZURE_TENANT_ID || '').trim();
+  const clientId = (process.env.AZURE_CLIENT_ID || '').trim();
+  const clientSecret = (process.env.AZURE_CLIENT_SECRET || '').trim();
+
+  if (tenantId && clientId && clientSecret) {
+    console.log('[MealPlanner] Authenticating with ClientSecretCredential');
+    return new ClientSecretCredential(tenantId, clientId, clientSecret);
+  }
+
+  console.log('[MealPlanner] Authenticating with DefaultAzureCredential');
+  return new DefaultAzureCredential();
+}
 
 let openAIClient;
 function getOpenAIClient() {
   assertFoundryConfiguration();
   if (!openAIClient) {
-    const project = new AIProjectClient(env.foundryProjectEndpoint, new DefaultAzureCredential());
+    console.log('[MealPlanner] Initializing AIProjectClient with endpoint:', env.foundryProjectEndpoint);
+    const project = new AIProjectClient(env.foundryProjectEndpoint, getCredential());
     openAIClient = project.getOpenAIClient();
   }
   return openAIClient;
@@ -63,7 +78,7 @@ function normalizeMeals(payload, preferences) {
 }
 
 export async function planMealWithAgent(preferences) {
-  console.log('[MealPlanner] Calling Foundry Agent');
+  console.log('[MealPlanner] Calling Foundry Agent:', env.foundryAgentName, 'version:', env.foundryAgentVersion);
   const client = getOpenAIClient();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), env.foundryRequestTimeoutMs);

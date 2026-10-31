@@ -54,7 +54,7 @@ export async function planMeal(request, response, next) {
     return response.json({ success: true, data: { meals } });
   } catch (error) {
     if (error.statusCode === 400) return response.status(400).json({ success: false, error: error.message });
-    console.error('[MealPlanner] Request failed:', error.message);
-    return next(error);
+    console.error('[MealPlanner] Request failed:', error);
+    return response.status(500).json({ success: false, error: error.message || 'Unable to generate meal plan.' });
   }
 }
