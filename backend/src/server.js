@@ -3,7 +3,7 @@ import cors from 'cors';
 import { env } from './config/env.js';
 import mealPlannerRoutes from './routes/mealPlannerRoutes.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import './config/database.js';
+import { db } from './config/database.js';
 import profileRoutes from './routes/profileRoutes.js';
 
 const app = express();
@@ -44,8 +44,25 @@ app.get('/', (_request, response) => response.json({
   success: true,
   message: 'AI Meal Planner API is running',
   health: '/api/health',
+  users: '/api/users',
 }));
+
 app.get('/api/health', (_request, response) => response.json({ status: 'ok', service: 'AI Meal Planner API' }));
+
+app.get('/api/users', (_request, response) => {
+  try {
+    const users = db.prepare('SELECT id, firebase_uid, email, display_name, created_at, updated_at FROM users ORDER BY id DESC').all();
+    const stats = {
+      totalUsers: users.length,
+      totalSearches: db.prepare('SELECT COUNT(*) AS count FROM meal_searches').get().count,
+      totalSaved: db.prepare('SELECT COUNT(*) AS count FROM saved_meals').get().count,
+    };
+    return response.json({ success: true, stats, users });
+  } catch (err) {
+    return response.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.use('/api/meal-planner', mealPlannerRoutes);
 app.use('/api/profile', profileRoutes);
 app.use(notFoundHandler);

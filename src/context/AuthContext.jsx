@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { updateProfile as updateProfileApi } from '../services/profileService';
+import { getProfile, updateProfile as updateProfileApi } from '../services/profileService';
 
 const AuthContext = createContext(null);
 
@@ -12,9 +12,17 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!auth) { setLoading(false); return undefined; }
-    return onAuthStateChanged(auth, (user) => {
+    return onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setLoading(false);
+      if (user) {
+        // Sync user record to backend SQLite database immediately
+        try {
+          await getProfile(user);
+        } catch (error) {
+          console.warn('[Auth] Background profile sync:', error.message);
+        }
+      }
     });
   }, []);
 
@@ -23,10 +31,25 @@ export function AuthProvider({ children }) {
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(credential.user, { displayName: fullName });
     setCurrentUser(credential.user);
+    try {
+      await getProfile(credential.user);
+    } catch (error) {
+      console.warn('[Auth] Background sync on signup:', error.message);
+    }
     return credential.user;
   };
 
-  const login = (email, password) => { if (!auth) return Promise.reject(new Error('Firebase authentication is not configured.')); return signInWithEmailAndPassword(auth, email, password); };
+  const login = async (email, password) => {
+    if (!auth) throw new Error('Firebase authentication is not configured.');
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    try {
+      await getProfile(credential.user);
+    } catch (error) {
+      console.warn('[Auth] Background sync on login:', error.message);
+    }
+    return credential.user;
+  };
+
   const logout = () => auth ? signOut(auth) : Promise.resolve();
   const resetPassword = (email) => { if (!auth) return Promise.reject(new Error('Firebase authentication is not configured.')); return sendPasswordResetEmail(auth, email); };
   const updateDisplayName = async (displayName) => {
