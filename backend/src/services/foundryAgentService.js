@@ -38,9 +38,12 @@ Dietary preference: ${preferences.diet}
 Restrictions: ${preferences.restrictions.join(', ') || 'none'}
 Available equipment: ${preferences.equipment.join(', ') || 'not specified'}
 
-Use the recipe knowledge available to you. Prioritize dietary compatibility, allergies and restrictions, available ingredients, available equipment, cooking time, budget, simplicity, and minimal additional ingredients. Return up to 3 suitable meal recommendations. Clearly distinguish available ingredients from additional ingredients. Do not recommend equipment the user does not have. If no suitable meal exists, return an empty meals array and explain why in a suitable meal description.
-
-The dietary preference is authoritative. If it conflicts with an ingredient, such as vegetarian with egg, do not silently assume an interpretation; explain the conflict and provide a clarification recommendation.
+CRITICAL INGREDIENT INSTRUCTIONS:
+1. Base the recommendations PRIMARILY and DIRECTLY on the user's available ingredients: [${preferences.ingredients.join(', ')}].
+2. DO NOT force, add, or suggest eggs unless 'egg' or 'eggs' is explicitly in the available ingredients. A dietary preference such as 'Eggitarian', 'Non-vegetarian', or 'No preference' simply indicates what is permitted; it does NOT mean every meal must include eggs or meat.
+3. If the user provides rice, onion, tomato, and sugar, create dishes made from those specific items (such as Tomato Rice, Onion-Tomato Pulao, Caramelized Onion Rice).
+4. Clearly distinguish available ingredients from additional ingredients. Keep additional ingredients to a minimum.
+5. Do not recommend equipment the user does not have. If no suitable meal exists, return an empty meals array and explain why.
 
 Return only JSON matching this shape: ${JSON.stringify({ meals: [{ name: 'string', description: 'string', mealType: 'string', diet: 'string', time: 20, difficulty: 'easy', additionalCost: 0, availableIngredients: ['string'], additionalIngredients: ['string'], equipment: ['string'], whyItFits: 'string', steps: ['string'], substitutions: ['string'], nutrition: { calories: 0, protein: 0 } }] })}`;
 }
